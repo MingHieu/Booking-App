@@ -1,18 +1,19 @@
-import {
-  ForbiddenException,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { AuthDto } from './dto';
 import * as argon from 'argon2';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService {
-  constructor(private prisma: PrismaService, private jwtSevice: JwtService) {}
+  constructor(
+    private prisma: PrismaService,
+    private jwtSevice: JwtService,
+    private config: ConfigService,
+  ) {}
 
   async signup(body: AuthDto) {
     try {
@@ -30,7 +31,7 @@ export class AuthService {
     } catch (e) {
       if (e instanceof PrismaClientKnownRequestError) {
         if (e.code == 'P2002') {
-          throw new ForbiddenException('username is already taken');
+          throw new ForbiddenException('Username already exists');
         }
       }
       throw e;
@@ -45,28 +46,29 @@ export class AuthService {
         username: username,
       },
     });
-    if (!user) return null;
+    if (!user) throw new ForbiddenException('Username is incorrect');
 
-    const isPasswordCorrect = await argon.verify(user.password, password);
-    if (!isPasswordCorrect) return null;
-
-    console.log(
-      this.jwtSevice.verify(user.token, {
-       
-      }),
-    );
+    const pwMatches = await argon.verify(user.password, password);
+    if (!pwMatches) throw new ForbiddenException('Password is incorrect');
 
     const retUser = await this.prisma.user.update({
       where: {
         username: username,
       },
       data: {
-        token: this.jwtSevice.sign(props),
+        token: this.signToken(user.id, user.uid),
       },
     });
     delete retUser.password;
     return retUser;
   }
 
-  logout() {}
+  signToken(userId: number, uid: string) {
+    const payload = { sub: userId, uid };
+
+    return this.jwtSevice.sign(payload, {
+      expiresIn: '1d',
+      secret: this.config.get('JWT_SECRET'),
+    });
+  }
 }

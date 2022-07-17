@@ -3,8 +3,8 @@ import {
   Body,
   Controller,
   HttpCode,
+  HttpStatus,
   Post,
-  UseGuards,
   ValidationPipe,
 } from '@nestjs/common';
 import { AuthDto } from './dto';
@@ -19,13 +19,8 @@ export class AuthController {
   }
 
   @Post('login')
-  @HttpCode(200)
+  @HttpCode(HttpStatus.OK)
   login(@Body(new ValidationPipe()) body: AuthDto) {
     return this.authService.login(body);
-  }
-
-  @Post('logout')
-  logout() {
-    return this.authService.logout();
   }
 }
