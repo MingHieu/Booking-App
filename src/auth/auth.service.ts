@@ -51,16 +51,25 @@ export class AuthService {
     const pwMatches = await argon.verify(user.password, password);
     if (!pwMatches) throw new ForbiddenException('Password is incorrect');
 
-    const retUser = await this.prisma.user.update({
-      where: {
-        username: username,
-      },
-      data: {
-        token: this.signToken(user.id, user.uid),
-      },
-    });
-    delete retUser.password;
-    return retUser;
+    try {
+      this.jwtSevice.verify(user.token, {
+        secret: this.config.get('JWT_SECRET'),
+      });
+      delete user.password;
+      return user;
+    } catch (error) {
+      // Token is expired or invalid
+      const retUser = await this.prisma.user.update({
+        where: {
+          username: username,
+        },
+        data: {
+          token: this.signToken(user.id, user.uid),
+        },
+      });
+      delete retUser.password;
+      return retUser;
+    }
   }
 
   signToken(userId: number, uid: string) {

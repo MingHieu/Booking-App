@@ -1,23 +1,3 @@
-/*
-  Warnings:
-
-  - You are about to drop the `Hotel` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `HotelImage` table. If the table is not empty, all the data it contains will be lost.
-  - You are about to drop the `User` table. If the table is not empty, all the data it contains will be lost.
-
-*/
--- DropForeignKey
-ALTER TABLE "HotelImage" DROP CONSTRAINT "HotelImage_hotelId_fkey";
-
--- DropTable
-DROP TABLE "Hotel";
-
--- DropTable
-DROP TABLE "HotelImage";
-
--- DropTable
-DROP TABLE "User";
-
 -- CreateTable
 CREATE TABLE "users" (
     "id" SERIAL NOT NULL,
@@ -32,6 +12,7 @@ CREATE TABLE "users" (
     "address" TEXT,
     "email" TEXT,
     "role" INTEGER NOT NULL,
+    "token" TEXT,
 
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
@@ -49,16 +30,19 @@ CREATE TABLE "hotels" (
 );
 
 -- CreateTable
-CREATE TABLE "hotelImages" (
+CREATE TABLE "hotel_images" (
     "id" SERIAL NOT NULL,
     "uri" TEXT NOT NULL,
     "hotelId" INTEGER NOT NULL,
 
-    CONSTRAINT "hotelImages_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "hotel_images_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_uid_key" ON "users"("uid");
 
+-- CreateIndex
+CREATE UNIQUE INDEX "users_username_key" ON "users"("username");
+
 -- AddForeignKey
-ALTER TABLE "hotelImages" ADD CONSTRAINT "hotelImages_hotelId_fkey" FOREIGN KEY ("hotelId") REFERENCES "hotels"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "hotel_images" ADD CONSTRAINT "hotel_images_hotelId_fkey" FOREIGN KEY ("hotelId") REFERENCES "hotels"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
