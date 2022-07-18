@@ -1,5 +1,6 @@
 import { PrismaService } from 'src/prisma/prisma.service';
-import { Injectable } from '@nestjs/common';
+import { HttpStatus, Injectable } from '@nestjs/common';
+import { UserDto } from './dto';
 
 @Injectable()
 export class UserService {
@@ -13,5 +14,18 @@ export class UserService {
     });
     delete user.password;
     return user;
+  }
+
+  async editInfo(userUid: string, body: UserDto) {
+    await this.prisma.user.update({
+      where: {
+        uid: userUid,
+      },
+      data: { ...body },
+    });
+    return {
+      statusCode: HttpStatus.CREATED,
+      message: 'Success',
+    };
   }
 }
